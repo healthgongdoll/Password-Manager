@@ -1,4 +1,5 @@
 from ast import Pass
+import os
 from cryptography.fernet import Fernet
 
 class PasswordManager:
@@ -7,18 +8,24 @@ class PasswordManager:
         self.password_file = None
         self.password_dict = {}
 
+    # Creates the key file 
     def create_key(self, path):
         self.key = Fernet.generate_key()
         with open(path, 'wb') as f:
             f.write(self.key)
+        
+       
 
     def load_key(self,path):
         with open(path, 'rb') as f:
             self.key = f.read()
-    
 
     def create_password_file(self, path, initial_values=None):
         self.password_file = path 
+        if self.key is None:
+            print("Please authenticate yourself first")
+            return 
+
         if initial_values is not None:
             for key, value in initial_values.items():
                 self.add_password(key, value)
@@ -34,10 +41,11 @@ class PasswordManager:
     def add_password(self, site, password):
         self.password_dict[site] = password
 
-        if self.password_file is not None:
+        if self.password_file is not None and self.key is not None:
             with open(self.password_file,'a+') as f:
-                encrypted = Fernet(self.key).encrypt(password.encode())
-                f.write(site + ":" + encrypted.decode()+ "\n")
+                    encrypted = Fernet(self.key).encrypt(password.encode())
+                    f.write(site + ":" + encrypted.decode()+ "\n")
+       
 
     def get_password(self, site):
         return self.password_dict[site]
@@ -53,6 +61,10 @@ def main():
     pm = PasswordManager()
 
     print(""" What do you want to do?
+    =====================================================================
+                    This is CryptoProject for Jay Chung 
+            Please Create the key first to use the Password Manager
+    =====================================================================
     (1) Create a new key
     (2) Load an existing key 
     (3) Create new password file
@@ -70,13 +82,14 @@ def main():
         choice = input("Enter your choice: ")
 
         if choice == "1":
-            path = input("Enter path: ")
+            path = input("Enter your name: ")
+            path += ".key"
             pm.create_key(path)
         elif choice == "2":
-            path = input("Enter path: ")
+            path = input("Enter your key please: ")
             pm.load_key(path)
         elif choice == "3":
-            path = input("etner path: ")
+            path = input("Enter path: ")
             pm.create_password_file(path, password)
         elif choice == "4":
             path = input("Enter path: ")
